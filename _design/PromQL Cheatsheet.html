@@ -1,0 +1,947 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PromQL Cheatsheet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --accent: #E6522C; /* prometheus orange, but we let user retune */
+    --accent-soft: color-mix(in oklch, var(--accent) 14%, transparent);
+    --accent-line: color-mix(in oklch, var(--accent) 32%, transparent);
+
+    --bg: #fbfaf7;
+    --surface: #ffffff;
+    --surface-2: #f4f2ed;
+    --ink: #14140f;
+    --ink-2: #3a3a32;
+    --ink-3: #6c6c63;
+    --line: #e6e3db;
+    --line-strong: #d4d0c4;
+
+    --code-bg: #0e0f10;
+    --code-ink: #e8e6df;
+    --code-comment: #7d8590;
+    --code-keyword: #ff8b6b;
+    --code-fn: #ffd178;
+    --code-string: #b8e58a;
+    --code-num: #c8a8ff;
+    --code-label: #7cd3ff;
+    --code-operator: #f0f0e8;
+
+    --radius: 10px;
+    --radius-sm: 6px;
+    --gutter: 24px;
+
+    /* density (overridden by [data-density="compact"]) */
+    --row-pad-y: 18px;
+    --row-pad-x: 22px;
+    --grid-gap: 18px;
+    --section-gap: 56px;
+    --code-fs: 13.5px;
+    --body-fs: 15px;
+    --h2-fs: 22px;
+  }
+  [data-theme="dark"] {
+    --bg: #0e0f10;
+    --surface: #16181a;
+    --surface-2: #1d1f22;
+    --ink: #ececea;
+    --ink-2: #c5c4be;
+    --ink-3: #8b8a82;
+    --line: #2a2c2f;
+    --line-strong: #3a3d40;
+    --code-bg: #0a0b0c;
+    --accent-soft: color-mix(in oklch, var(--accent) 22%, transparent);
+    --accent-line: color-mix(in oklch, var(--accent) 42%, transparent);
+  }
+  [data-density="compact"] {
+    --row-pad-y: 12px;
+    --row-pad-x: 16px;
+    --grid-gap: 12px;
+    --section-gap: 36px;
+    --code-fs: 12.5px;
+    --body-fs: 14px;
+    --h2-fs: 19px;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'Geist', ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    font-size: var(--body-fs);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: "ss01", "cv11";
+  }
+
+  /* ───── layout ───── */
+  .page {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 56px 32px 120px;
+  }
+  @media (max-width: 720px) {
+    .page { padding: 32px 18px 80px; }
+  }
+
+  /* ───── top bar ───── */
+  .topbar {
+    position: sticky; top: 0; z-index: 40;
+    backdrop-filter: saturate(140%) blur(14px);
+    -webkit-backdrop-filter: saturate(140%) blur(14px);
+    background: color-mix(in oklch, var(--bg) 78%, transparent);
+    border-bottom: 1px solid var(--line);
+  }
+  .topbar-inner {
+    max-width: 1180px; margin: 0 auto;
+    display: flex; align-items: center; gap: 16px;
+    padding: 14px 32px;
+  }
+  @media (max-width: 720px) { .topbar-inner { padding: 12px 18px; } }
+  .brand {
+    display: flex; align-items: center; gap: 10px;
+    font-weight: 600; letter-spacing: -0.01em;
+  }
+  .brand-mark {
+    width: 22px; height: 22px; border-radius: 6px;
+    background: var(--accent);
+    display: grid; place-items: center;
+    color: #fff; font-family: 'JetBrains Mono', monospace; font-weight: 700;
+    font-size: 12px;
+  }
+  .brand small { color: var(--ink-3); font-weight: 400; margin-left: 4px; }
+  .topbar-spacer { flex: 1; }
+
+  .search {
+    position: relative;
+    flex: 1; max-width: 380px;
+  }
+  .search input {
+    width: 100%;
+    padding: 9px 12px 9px 34px;
+    font: inherit; font-size: 14px;
+    color: var(--ink);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    outline: none;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .search input::placeholder { color: var(--ink-3); }
+  .search input:focus {
+    border-color: var(--accent-line);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+  .search svg {
+    position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
+    color: var(--ink-3);
+  }
+  .search kbd {
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    color: var(--ink-3);
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 1px 5px;
+  }
+
+  .iconbtn {
+    width: 36px; height: 36px;
+    display: grid; place-items: center;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    color: var(--ink-2);
+    cursor: pointer;
+    transition: background .15s, color .15s, border-color .15s;
+  }
+  .iconbtn:hover { color: var(--ink); border-color: var(--line-strong); }
+
+  .printbtn {
+    height: 36px; padding: 0 14px;
+    display: inline-flex; align-items: center; gap: 7px;
+    font: inherit; font-size: 13px; font-weight: 500;
+    background: var(--ink); color: var(--bg);
+    border: 1px solid var(--ink);
+    border-radius: 8px; cursor: pointer;
+    text-decoration: none;
+    transition: opacity .15s;
+  }
+  .printbtn:hover { opacity: .85; }
+
+  /* ───── hero ───── */
+  .hero { padding: 56px 0 40px; max-width: 760px; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: 'JetBrains Mono', monospace; font-size: 12px;
+    color: var(--ink-3); text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 18px;
+  }
+  .eyebrow::before {
+    content: ""; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent);
+  }
+  .hero h1 {
+    font-size: clamp(36px, 5vw, 56px);
+    line-height: 1.05; margin: 0 0 18px;
+    letter-spacing: -0.025em; font-weight: 600;
+    text-wrap: balance;
+  }
+  .hero h1 em {
+    font-style: normal;
+    color: var(--accent);
+  }
+  .hero p {
+    font-size: 17px; color: var(--ink-2); margin: 0;
+    text-wrap: pretty; max-width: 60ch;
+  }
+
+  /* ───── TOC ───── */
+  .toc {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    margin: 32px 0 8px;
+    padding-top: 28px;
+    border-top: 1px solid var(--line);
+  }
+  .toc a {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; color: var(--ink-2);
+    text-decoration: none;
+    padding: 5px 10px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    transition: all .15s;
+  }
+  .toc a:hover {
+    color: var(--accent);
+    border-color: var(--accent-line);
+    background: var(--accent-soft);
+  }
+  .toc a span { color: var(--ink-3); margin-right: 6px; }
+
+  /* ───── section ───── */
+  section.cs {
+    margin-top: var(--section-gap);
+    scroll-margin-top: 80px;
+  }
+  .sec-head {
+    display: flex; align-items: baseline; gap: 14px;
+    margin-bottom: 22px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--line);
+  }
+  .sec-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px; color: var(--accent);
+    font-weight: 500;
+  }
+  .sec-head h2 {
+    font-size: var(--h2-fs);
+    margin: 0; font-weight: 600;
+    letter-spacing: -0.015em;
+  }
+  .sec-head .sec-sub {
+    color: var(--ink-3); font-size: 13px;
+    margin-left: auto;
+  }
+
+  /* ───── grid of cards ───── */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: var(--grid-gap);
+  }
+  .grid.tall {
+    grid-template-columns: repeat(auto-fill, minmax(440px, 1fr));
+  }
+
+  .row {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: var(--row-pad-y) var(--row-pad-x);
+    transition: border-color .15s;
+  }
+  .row:hover { border-color: var(--line-strong); }
+  .row.dim { opacity: .25; pointer-events: none; }
+
+  .row-title {
+    display: flex; align-items: baseline; gap: 10px;
+    margin-bottom: 8px;
+  }
+  .row-title h3 {
+    margin: 0; font-size: 14px; font-weight: 600;
+    letter-spacing: -0.005em;
+  }
+  .row-title .badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: var(--surface-2);
+    color: var(--ink-3);
+    text-transform: lowercase;
+    border: 1px solid var(--line);
+  }
+  .row-title .badge.adv {
+    color: var(--accent);
+    background: var(--accent-soft);
+    border-color: var(--accent-line);
+  }
+  .row > p {
+    margin: 0 0 12px;
+    color: var(--ink-2);
+    font-size: 13.5px;
+    line-height: 1.5;
+  }
+
+  /* ───── code blocks ───── */
+  pre.code {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-ink);
+    padding: 12px 14px;
+    border-radius: var(--radius-sm);
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: var(--code-fs);
+    line-height: 1.55;
+    overflow-x: auto;
+    white-space: pre;
+    font-weight: 500;
+    font-feature-settings: "calt" 0;
+  }
+  pre.code .c { color: var(--code-comment); font-style: italic; }
+  pre.code .k { color: var(--code-keyword); }
+  pre.code .fn { color: var(--code-fn); }
+  pre.code .s { color: var(--code-string); }
+  pre.code .n { color: var(--code-num); }
+  pre.code .l { color: var(--code-label); }
+  pre.code .o { color: var(--code-operator); }
+  pre.code .d { color: #ffaf6b; } /* duration */
+
+  .row .note {
+    margin-top: 10px;
+    font-size: 12.5px;
+    color: var(--ink-3);
+    line-height: 1.5;
+  }
+  .row .note strong { color: var(--ink-2); font-weight: 600; }
+
+  /* ───── footer ───── */
+  footer {
+    margin-top: 96px;
+    padding-top: 28px;
+    border-top: 1px solid var(--line);
+    color: var(--ink-3);
+    font-size: 13px;
+    display: flex; flex-wrap: wrap; gap: 16px; justify-content: space-between;
+  }
+  footer a { color: var(--ink-2); text-decoration: none; border-bottom: 1px solid var(--line); }
+  footer a:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* ───── empty search ───── */
+  .empty {
+    text-align: center; padding: 80px 0;
+    color: var(--ink-3);
+    font-size: 14px;
+  }
+  .empty kbd {
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--surface-2); border: 1px solid var(--line);
+    padding: 1px 6px; border-radius: 4px; color: var(--ink-2);
+  }
+
+  section.cs.dim-section { opacity: .4; }
+
+  /* gotchas section special styling */
+  .gotcha {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--radius-sm);
+    padding: 14px 18px;
+  }
+  .gotcha h3 {
+    margin: 0 0 6px; font-size: 14px; font-weight: 600;
+    color: var(--ink);
+  }
+  .gotcha p {
+    margin: 0; font-size: 13.5px; color: var(--ink-2);
+    line-height: 1.55;
+  }
+  .gotcha p code, p code, .row-title h3 code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9em;
+    background: var(--surface-2);
+    padding: 1px 5px;
+    border-radius: 3px;
+    color: var(--ink);
+  }
+</style>
+</head>
+<body data-theme="light" data-density="comfortable">
+
+<!-- top bar -->
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="brand-mark">{ }</div>
+      PromQL <small>cheatsheet</small>
+    </div>
+    <div class="topbar-spacer"></div>
+    <div class="search">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="search" type="search" placeholder="Search rate, sum, label_replace…" autocomplete="off" />
+      <kbd>/</kbd>
+    </div>
+    <button class="iconbtn" id="theme-toggle" title="Toggle theme" aria-label="Toggle theme">
+      <svg id="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      <svg id="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <a class="printbtn" href="PromQL One-Pager.html" target="_blank" rel="noopener">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      One-pager
+    </a>
+  </div>
+</div>
+
+<main class="page">
+
+  <!-- hero -->
+  <header class="hero">
+    <div class="eyebrow">Reference · v2.x</div>
+    <h1>Everything you need to write <em>PromQL</em>, on one page.</h1>
+    <p>A modern reference for the Prometheus query language — types, selectors, operators, aggregations, functions, time syntax, and the gotchas you only learn at 3am. Beginner sections first, advanced as you scroll.</p>
+  </header>
+
+  <!-- TOC -->
+  <nav class="toc">
+    <a href="#types"><span>01</span>Data types</a>
+    <a href="#selectors"><span>02</span>Selectors &amp; matchers</a>
+    <a href="#time"><span>03</span>Time &amp; durations</a>
+    <a href="#aggregation"><span>04</span>Aggregation</a>
+    <a href="#functions"><span>05</span>Functions</a>
+    <a href="#gotchas"><span>06</span>Gotchas</a>
+  </nav>
+
+  <!-- ════════ 01 DATA TYPES ════════ -->
+  <section class="cs" id="types">
+    <div class="sec-head">
+      <span class="sec-num">01</span>
+      <h2>Data types</h2>
+      <span class="sec-sub">What every PromQL expression evaluates to</span>
+    </div>
+    <div class="grid">
+
+      <article class="row" data-keys="instant vector">
+        <div class="row-title"><h3>Instant vector</h3><span class="badge">basic</span></div>
+        <p>A set of time series, each with a single sample at the evaluation timestamp. The most common return type.</p>
+<pre class="code"><span class="fn">http_requests_total</span>
+<span class="c"># → one value per matching series, "now"</span></pre>
+      </article>
+
+      <article class="row" data-keys="range vector">
+        <div class="row-title"><h3>Range vector</h3><span class="badge">basic</span></div>
+        <p>Each series carries a window of samples. You can't graph one directly — feed it to <code>rate()</code>, <code>avg_over_time()</code>, etc.</p>
+<pre class="code"><span class="fn">http_requests_total</span>[<span class="d">5m</span>]
+<span class="c"># → all samples in the last 5 minutes</span></pre>
+      </article>
+
+      <article class="row" data-keys="scalar number">
+        <div class="row-title"><h3>Scalar</h3><span class="badge">basic</span></div>
+        <p>A single floating-point number. Returned by literals and the <code>scalar()</code> function.</p>
+<pre class="code"><span class="n">3.14</span>
+<span class="fn">scalar</span>(<span class="fn">sum</span>(<span class="fn">up</span>))</pre>
+      </article>
+
+      <article class="row" data-keys="string">
+        <div class="row-title"><h3>String</h3><span class="badge">basic</span></div>
+        <p>Currently used only as function arguments. You can't query a string.</p>
+<pre class="code"><span class="s">"five minutes"</span></pre>
+      </article>
+    </div>
+  </section>
+
+  <!-- ════════ 02 SELECTORS ════════ -->
+  <section class="cs" id="selectors">
+    <div class="sec-head">
+      <span class="sec-num">02</span>
+      <h2>Selectors &amp; matchers</h2>
+      <span class="sec-sub">Picking the series you want</span>
+    </div>
+    <div class="grid">
+
+      <article class="row" data-keys="metric name">
+        <div class="row-title"><h3>By metric name</h3><span class="badge">basic</span></div>
+        <p>The bare name selects every series that shares it.</p>
+<pre class="code"><span class="fn">node_cpu_seconds_total</span></pre>
+      </article>
+
+      <article class="row" data-keys="equals label match">
+        <div class="row-title"><h3>Label equals <code>=</code></h3><span class="badge">basic</span></div>
+        <p>Exact string match. Most common matcher in everyday queries.</p>
+<pre class="code"><span class="fn">http_requests_total</span>{<span class="l">job</span>=<span class="s">"api"</span>, <span class="l">method</span>=<span class="s">"GET"</span>}</pre>
+      </article>
+
+      <article class="row" data-keys="not equal label">
+        <div class="row-title"><h3>Not equal <code>!=</code></h3><span class="badge">basic</span></div>
+        <p>Exclude a label value. Useful for filtering out a noisy instance or status.</p>
+<pre class="code"><span class="fn">http_requests_total</span>{<span class="l">status</span>!=<span class="s">"200"</span>}</pre>
+      </article>
+
+      <article class="row" data-keys="regex match">
+        <div class="row-title"><h3>Regex match <code>=~</code></h3><span class="badge">basic</span></div>
+        <p>RE2 regex, fully anchored automatically. Great for OR-ing several values.</p>
+<pre class="code"><span class="fn">http_requests_total</span>{<span class="l">status</span>=~<span class="s">"5.."</span>}
+<span class="fn">up</span>{<span class="l">job</span>=~<span class="s">"api|web|worker"</span>}</pre>
+      </article>
+
+      <article class="row" data-keys="negative regex">
+        <div class="row-title"><h3>Negative regex <code>!~</code></h3><span class="badge">adv</span></div>
+        <p>Series whose label does <em>not</em> match the pattern.</p>
+<pre class="code"><span class="fn">requests_total</span>{<span class="l">path</span>!~<span class="s">"/health.*"</span>}</pre>
+      </article>
+
+      <article class="row" data-keys="empty label absent">
+        <div class="row-title"><h3>Match a missing label</h3><span class="badge adv">advanced</span></div>
+        <p>An empty string matches series where the label is unset. Pair with <code>=</code> or <code>!=</code>.</p>
+<pre class="code"><span class="c"># series WITHOUT an env label</span>
+<span class="fn">up</span>{<span class="l">env</span>=<span class="s">""</span>}
+
+<span class="c"># series that DO have one</span>
+<span class="fn">up</span>{<span class="l">env</span>!=<span class="s">""</span>}</pre>
+      </article>
+
+      <article class="row" data-keys="metric name regex __name__">
+        <div class="row-title"><h3>Match metric name as a label</h3><span class="badge adv">advanced</span></div>
+        <p>The metric name lives in the special <code>__name__</code> label, so you can regex-match it too.</p>
+<pre class="code">{<span class="l">__name__</span>=~<span class="s">"node_cpu_.*"</span>, <span class="l">cpu</span>=<span class="s">"0"</span>}</pre>
+      </article>
+
+      <article class="row" data-keys="offset modifier">
+        <div class="row-title"><h3>Offset</h3><span class="badge adv">advanced</span></div>
+        <p>Shifts the evaluation time backward. <code>@</code> pins it to a Unix timestamp.</p>
+<pre class="code"><span class="fn">http_requests_total</span> <span class="k">offset</span> <span class="d">5m</span>
+
+<span class="c"># pin to a specific moment</span>
+<span class="fn">http_requests_total</span> @ <span class="n">1672531200</span></pre>
+      </article>
+    </div>
+  </section>
+
+  <!-- ════════ 03 TIME ════════ -->
+  <section class="cs" id="time">
+    <div class="sec-head">
+      <span class="sec-num">03</span>
+      <h2>Time &amp; duration syntax</h2>
+      <span class="sec-sub">Windows, ranges, and subqueries</span>
+    </div>
+    <div class="grid">
+
+      <article class="row" data-keys="duration units">
+        <div class="row-title"><h3>Duration units</h3><span class="badge">basic</span></div>
+        <p>Combine integer + unit. Units can be chained, biggest first, no spaces.</p>
+<pre class="code"><span class="d">5m</span>      <span class="c"># 5 minutes</span>
+<span class="d">1h30m</span>   <span class="c"># 1.5 hours</span>
+<span class="d">7d</span>      <span class="c"># 7 days</span>
+<span class="d">1y2w</span>    <span class="c"># 1 year 2 weeks</span>
+<span class="c"># units: ms s m h d w y</span></pre>
+      </article>
+
+      <article class="row" data-keys="range vector window">
+        <div class="row-title"><h3>Range vector window</h3><span class="badge">basic</span></div>
+        <p>Square brackets after a selector capture all samples in that window.</p>
+<pre class="code"><span class="fn">node_network_receive_bytes_total</span>[<span class="d">5m</span>]</pre>
+      </article>
+
+      <article class="row" data-keys="subquery">
+        <div class="row-title"><h3>Subquery</h3><span class="badge adv">advanced</span></div>
+        <p><code>[range:resolution]</code> — evaluates an instant-vector expression over a range, like a recording rule on the fly. Resolution is optional.</p>
+<pre class="code"><span class="fn">max_over_time</span>(
+  <span class="fn">rate</span>(<span class="fn">http_requests_total</span>[<span class="d">5m</span>])[<span class="d">1h</span>:<span class="d">1m</span>]
+)</pre>
+        <p class="note"><strong>Cost:</strong> subqueries re-evaluate the inner expression at each step. Prefer recording rules for hot paths.</p>
+      </article>
+
+      <article class="row" data-keys="@ start end">
+        <div class="row-title"><h3><code>@ start()</code> / <code>@ end()</code></h3><span class="badge adv">advanced</span></div>
+        <p>Pins evaluation to the start or end of the surrounding range query — handy for rendering "value at the moment of an alert".</p>
+<pre class="code"><span class="fn">http_requests_total</span> @ <span class="fn">start</span>()</pre>
+      </article>
+    </div>
+  </section>
+
+  <!-- ════════ 04 AGGREGATION ════════ -->
+  <section class="cs" id="aggregation">
+    <div class="sec-head">
+      <span class="sec-num">04</span>
+      <h2>Aggregation operators</h2>
+      <span class="sec-sub">Roll up an instant vector across series</span>
+    </div>
+    <div class="grid">
+
+      <article class="row" data-keys="sum total">
+        <div class="row-title"><h3><code>sum</code></h3><span class="badge">basic</span></div>
+        <p>Add values across series. Almost always combined with <code>by</code> or <code>without</code>.</p>
+<pre class="code"><span class="k">sum</span> <span class="k">by</span> (<span class="l">job</span>) (<span class="fn">http_requests_total</span>)</pre>
+      </article>
+
+      <article class="row" data-keys="avg average">
+        <div class="row-title"><h3><code>avg</code></h3><span class="badge">basic</span></div>
+<pre class="code"><span class="k">avg</span> <span class="k">by</span> (<span class="l">instance</span>) (<span class="fn">node_load1</span>)</pre>
+      </article>
+
+      <article class="row" data-keys="min max">
+        <div class="row-title"><h3><code>min</code> / <code>max</code></h3><span class="badge">basic</span></div>
+<pre class="code"><span class="k">max</span> <span class="k">by</span> (<span class="l">job</span>) (<span class="fn">up</span>)</pre>
+      </article>
+
+      <article class="row" data-keys="count series">
+        <div class="row-title"><h3><code>count</code></h3><span class="badge">basic</span></div>
+        <p>Number of series in each group. Use <code>count_values</code> for value buckets.</p>
+<pre class="code"><span class="k">count</span> <span class="k">by</span> (<span class="l">job</span>) (<span class="fn">up</span> == <span class="n">1</span>)</pre>
+      </article>
+
+      <article class="row" data-keys="by without grouping">
+        <div class="row-title"><h3><code>by</code> vs <code>without</code></h3><span class="badge">basic</span></div>
+        <p><code>by</code> keeps only listed labels; <code>without</code> drops them and keeps the rest. Pick whichever is shorter to type.</p>
+<pre class="code"><span class="k">sum</span> <span class="k">by</span> (<span class="l">code</span>) (<span class="fn">requests</span>)
+<span class="k">sum</span> <span class="k">without</span> (<span class="l">instance</span>, <span class="l">pod</span>) (<span class="fn">requests</span>)</pre>
+      </article>
+
+      <article class="row" data-keys="topk bottomk">
+        <div class="row-title"><h3><code>topk</code> / <code>bottomk</code></h3><span class="badge adv">advanced</span></div>
+        <p>K highest/lowest series per group — keeps labels, unlike <code>sum</code>.</p>
+<pre class="code"><span class="k">topk</span>(<span class="n">5</span>, <span class="fn">rate</span>(<span class="fn">http_requests_total</span>[<span class="d">5m</span>]))</pre>
+      </article>
+
+      <article class="row" data-keys="quantile percentile">
+        <div class="row-title"><h3><code>quantile</code></h3><span class="badge adv">advanced</span></div>
+        <p>φ-quantile (0–1) <em>across series</em>. For histogram quantiles, see <code>histogram_quantile</code>.</p>
+<pre class="code"><span class="k">quantile</span> <span class="k">by</span> (<span class="l">job</span>) (<span class="n">0.95</span>, <span class="fn">go_goroutines</span>)</pre>
+      </article>
+
+      <article class="row" data-keys="stddev stdvar">
+        <div class="row-title"><h3><code>stddev</code> / <code>stdvar</code></h3><span class="badge adv">advanced</span></div>
+        <p>Population standard deviation / variance across series in each group.</p>
+<pre class="code"><span class="k">stddev</span> <span class="k">by</span> (<span class="l">cluster</span>) (<span class="fn">node_load1</span>)</pre>
+      </article>
+
+      <article class="row" data-keys="group label">
+        <div class="row-title"><h3><code>group</code></h3><span class="badge adv">advanced</span></div>
+        <p>Returns a constant 1 per group — useful as a left side in many-to-one joins.</p>
+<pre class="code"><span class="k">group</span> <span class="k">by</span> (<span class="l">cluster</span>, <span class="l">namespace</span>) (<span class="fn">kube_pod_info</span>)</pre>
+      </article>
+    </div>
+  </section>
+
+  <!-- ════════ 05 FUNCTIONS ════════ -->
+  <section class="cs" id="functions">
+    <div class="sec-head">
+      <span class="sec-num">05</span>
+      <h2>Functions</h2>
+      <span class="sec-sub">The workhorses, ordered roughly by how often you'll reach for them</span>
+    </div>
+    <div class="grid tall">
+
+      <article class="row" data-keys="rate counter">
+        <div class="row-title"><h3><code>rate(v range)</code></h3><span class="badge">basic</span></div>
+        <p>Per-second average rate of a counter over the window. Resets are handled automatically. Use this for graphs and alerts on counters.</p>
+<pre class="code"><span class="fn">rate</span>(<span class="fn">http_requests_total</span>[<span class="d">5m</span>])</pre>
+        <p class="note">Window must contain at least 2 samples — make it ≥ 4× scrape interval.</p>
+      </article>
+
+      <article class="row" data-keys="irate instant rate">
+        <div class="row-title"><h3><code>irate(v range)</code></h3><span class="badge adv">advanced</span></div>
+        <p>Rate based on the <em>last two</em> samples only — reactive but spiky. Good for short-lived dashboards, bad for alerts.</p>
+<pre class="code"><span class="fn">irate</span>(<span class="fn">http_requests_total</span>[<span class="d">1m</span>])</pre>
+      </article>
+
+      <article class="row" data-keys="increase counter delta">
+        <div class="row-title"><h3><code>increase(v range)</code></h3><span class="badge">basic</span></div>
+        <p>Total counter increase over the window. Equivalent to <code>rate × seconds</code>, but reads more naturally.</p>
+<pre class="code"><span class="fn">increase</span>(<span class="fn">errors_total</span>[<span class="d">1h</span>])</pre>
+      </article>
+
+      <article class="row" data-keys="delta gauge">
+        <div class="row-title"><h3><code>delta(v range)</code></h3><span class="badge">basic</span></div>
+        <p>First-to-last difference for a <em>gauge</em>. Don't use on counters (use <code>increase</code>).</p>
+<pre class="code"><span class="fn">delta</span>(<span class="fn">cpu_temp_celsius</span>[<span class="d">2h</span>])</pre>
+      </article>
+
+      <article class="row" data-keys="histogram quantile latency">
+        <div class="row-title"><h3><code>histogram_quantile(φ, b)</code></h3><span class="badge adv">advanced</span></div>
+        <p>φ-quantile (0–1) from a classic histogram's <code>_bucket</code> series. Always pair with <code>rate</code> + a <code>sum by (le, …)</code>.</p>
+<pre class="code"><span class="fn">histogram_quantile</span>(<span class="n">0.95</span>,
+  <span class="k">sum</span> <span class="k">by</span> (<span class="l">le</span>, <span class="l">job</span>) (
+    <span class="fn">rate</span>(<span class="fn">http_request_duration_seconds_bucket</span>[<span class="d">5m</span>])
+  )
+)</pre>
+      </article>
+
+      <article class="row" data-keys="predict_linear forecast">
+        <div class="row-title"><h3><code>predict_linear(v range, t)</code></h3><span class="badge adv">advanced</span></div>
+        <p>Linear regression — predicts the value <code>t</code> seconds from now. Classic disk-full alert.</p>
+<pre class="code"><span class="fn">predict_linear</span>(
+  <span class="fn">node_filesystem_avail_bytes</span>[<span class="d">1h</span>], <span class="n">4 * 3600</span>
+) &lt; <span class="n">0</span></pre>
+      </article>
+
+      <article class="row" data-keys="aggregation over time avg max min">
+        <div class="row-title"><h3><code>*_over_time(v range)</code></h3><span class="badge">basic</span></div>
+        <p>Aggregate a range vector along the <em>time</em> axis (per series). Family includes <code>avg / min / max / sum / count / quantile / stddev / last</code>.</p>
+<pre class="code"><span class="fn">avg_over_time</span>(<span class="fn">cpu_usage</span>[<span class="d">10m</span>])
+<span class="fn">max_over_time</span>(<span class="fn">queue_depth</span>[<span class="d">1h</span>])
+<span class="fn">last_over_time</span>(<span class="fn">build_info</span>[<span class="d">24h</span>])</pre>
+      </article>
+
+      <article class="row" data-keys="absent missing">
+        <div class="row-title"><h3><code>absent(v)</code> / <code>absent_over_time</code></h3><span class="badge adv">advanced</span></div>
+        <p>Returns 1 when the input has no series — perfect for "did this metric stop reporting?" alerts.</p>
+<pre class="code"><span class="fn">absent</span>(<span class="fn">up</span>{<span class="l">job</span>=<span class="s">"api"</span>})
+<span class="fn">absent_over_time</span>(<span class="fn">up</span>{<span class="l">job</span>=<span class="s">"api"</span>}[<span class="d">5m</span>])</pre>
+      </article>
+
+      <article class="row" data-keys="changes resets">
+        <div class="row-title"><h3><code>changes</code> / <code>resets</code></h3><span class="badge adv">advanced</span></div>
+        <p><code>changes</code> counts value changes (gauges); <code>resets</code> counts counter resets in the window.</p>
+<pre class="code"><span class="fn">changes</span>(<span class="fn">leader_id</span>[<span class="d">1h</span>])
+<span class="fn">resets</span>(<span class="fn">process_start_time_seconds</span>[<span class="d">1h</span>])</pre>
+      </article>
+
+      <article class="row" data-keys="label_replace rewrite">
+        <div class="row-title"><h3><code>label_replace</code></h3><span class="badge adv">advanced</span></div>
+        <p>Rewrite a label using a regex on another label. Most common use: aligning labels for a join.</p>
+<pre class="code"><span class="fn">label_replace</span>(
+  <span class="fn">up</span>, <span class="s">"host"</span>, <span class="s">"$1"</span>, <span class="s">"instance"</span>, <span class="s">"(.*):.*"</span>
+)</pre>
+      </article>
+
+      <article class="row" data-keys="label_join">
+        <div class="row-title"><h3><code>label_join</code></h3><span class="badge adv">advanced</span></div>
+        <p>Concatenate label values into a new label using a separator.</p>
+<pre class="code"><span class="fn">label_join</span>(<span class="fn">up</span>, <span class="s">"id"</span>, <span class="s">"/"</span>, <span class="s">"job"</span>, <span class="s">"instance"</span>)</pre>
+      </article>
+
+      <article class="row" data-keys="vector scalar conversion">
+        <div class="row-title"><h3><code>vector(s)</code> / <code>scalar(v)</code></h3><span class="badge adv">advanced</span></div>
+        <p>Bridge between scalar and vector worlds — useful in arithmetic against constants.</p>
+<pre class="code"><span class="fn">vector</span>(<span class="n">1</span>)
+<span class="fn">scalar</span>(<span class="fn">sum</span>(<span class="fn">up</span>))</pre>
+      </article>
+
+      <article class="row" data-keys="time clock now">
+        <div class="row-title"><h3><code>time()</code></h3><span class="badge adv">advanced</span></div>
+        <p>Unix timestamp (seconds) of the evaluation. Combine with <code>process_start_time_seconds</code> for uptime.</p>
+<pre class="code"><span class="fn">time</span>() - <span class="fn">process_start_time_seconds</span></pre>
+      </article>
+
+      <article class="row" data-keys="clamp clamp_max clamp_min">
+        <div class="row-title"><h3><code>clamp</code> / <code>clamp_min</code> / <code>clamp_max</code></h3><span class="badge adv">advanced</span></div>
+        <p>Squeeze values into a range. Handy for sanitizing dashboards.</p>
+<pre class="code"><span class="fn">clamp</span>(<span class="fn">cpu_pct</span>, <span class="n">0</span>, <span class="n">100</span>)</pre>
+      </article>
+
+      <article class="row" data-keys="sort">
+        <div class="row-title"><h3><code>sort</code> / <code>sort_desc</code></h3><span class="badge">basic</span></div>
+        <p>Sort the result vector by sample value. Affects table view, not graphs.</p>
+<pre class="code"><span class="fn">sort_desc</span>(<span class="fn">rate</span>(<span class="fn">errors_total</span>[<span class="d">5m</span>]))</pre>
+      </article>
+
+      <article class="row" data-keys="binary operators arithmetic">
+        <div class="row-title"><h3>Arithmetic &amp; logic</h3><span class="badge">basic</span></div>
+        <p>Vectors line up by matching label sets. Use <code>on()</code>/<code>ignoring()</code> + <code>group_left/right</code> for many-to-one joins.</p>
+<pre class="code"><span class="fn">requests</span>{<span class="l">code</span>=<span class="s">"5xx"</span>}
+  / <span class="k">ignoring</span>(<span class="l">code</span>) <span class="k">group_left</span>
+<span class="fn">requests</span></pre>
+      </article>
+    </div>
+  </section>
+
+  <!-- ════════ 06 GOTCHAS ════════ -->
+  <section class="cs" id="gotchas">
+    <div class="sec-head">
+      <span class="sec-num">06</span>
+      <h2>Performance &amp; gotchas</h2>
+      <span class="sec-sub">Things that bite once you're past beginner</span>
+    </div>
+    <div class="grid">
+
+      <article class="row" data-keys="rate sum order">
+        <div class="row-title"><h3><code>rate()</code> goes <em>inside</em> <code>sum()</code></h3></div>
+        <p>Always: <code>sum(rate(...))</code>, never <code>rate(sum(...))</code>. Counters reset per series; aggregating first hides the resets and produces nonsense.</p>
+      </article>
+
+      <article class="row" data-keys="rate window scrape interval">
+        <div class="row-title"><h3>Range window ≥ 4× scrape interval</h3></div>
+        <p><code>rate</code>/<code>increase</code> need at least 2 samples. With a 30s scrape, <code>[1m]</code> is fragile. <code>[2m]</code> is the safe minimum, <code>[5m]</code> is conventional.</p>
+      </article>
+
+      <article class="row" data-keys="extrapolation increase">
+        <div class="row-title"><h3><code>increase()</code> can return non-integers</h3></div>
+        <p>Prometheus extrapolates to the window edges. <code>increase(x[1h])</code> may report 4.32 even though counters are integers. Don't be alarmed.</p>
+      </article>
+
+      <article class="row" data-keys="gauge delta counter">
+        <div class="row-title"><h3>Match the function to the metric type</h3></div>
+        <p><code>rate / irate / increase / resets</code> → counters. <code>delta / deriv / predict_linear</code> → gauges. Mixing them silently produces wrong numbers.</p>
+      </article>
+
+      <article class="row" data-keys="histogram quantile le label">
+        <div class="row-title"><h3>Keep <code>le</code> when summing histograms</h3></div>
+        <p><code>histogram_quantile</code> needs the <code>le</code> label. <code>sum by (le, …)(rate(..._bucket[5m]))</code> — never drop it.</p>
+      </article>
+
+      <article class="row" data-keys="cardinality high">
+        <div class="row-title"><h3>Watch label cardinality</h3></div>
+        <p>User IDs, request paths, and trace IDs as labels will burn your TSDB. Aggregate them away early in queries; never expose them on hot metrics.</p>
+      </article>
+
+      <article class="row" data-keys="subquery cost">
+        <div class="row-title"><h3>Subqueries are expensive</h3></div>
+        <p><code>[1h:1m]</code> means 60 inner evaluations per output point. If you reach for one in a dashboard panel, it probably wants to be a recording rule.</p>
+      </article>
+
+      <article class="row" data-keys="vector matching labels">
+        <div class="row-title"><h3>Binary ops need matching label sets</h3></div>
+        <p>If <code>a / b</code> drops to empty, the two sides have different labels. Use <code>on(...)</code> to whitelist matching labels, <code>ignoring(...)</code> to drop the noisy ones, and <code>group_left</code>/<code>group_right</code> for many-to-one.</p>
+      </article>
+    </div>
+  </section>
+
+  <footer>
+    <span>PromQL cheatsheet · curated reference, not exhaustive docs</span>
+    <span>Canonical reference: <a href="https://prometheus.io/docs/prometheus/latest/querying/basics/" target="_blank" rel="noopener">prometheus.io</a></span>
+  </footer>
+</main>
+
+<!-- React + Babel -->
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+
+<script type="text/babel">
+/* ───── theme toggle (vanilla, runs immediately) ───── */
+(function () {
+  const root = document.body;
+  const stored = localStorage.getItem('promql-theme');
+  if (stored) root.dataset.theme = stored;
+  const sun = document.getElementById('icon-sun');
+  const moon = document.getElementById('icon-moon');
+  function syncIcons() {
+    const dark = root.dataset.theme === 'dark';
+    sun.style.display = dark ? 'none' : 'block';
+    moon.style.display = dark ? 'block' : 'none';
+  }
+  syncIcons();
+  document.getElementById('theme-toggle').addEventListener('click', () => {
+    root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark';
+    localStorage.setItem('promql-theme', root.dataset.theme);
+    syncIcons();
+  });
+
+  /* ───── search filter ───── */
+  const input = document.getElementById('search');
+  const rows = [...document.querySelectorAll('.row')];
+  const sections = [...document.querySelectorAll('section.cs')];
+  const main = document.querySelector('main.page');
+  let emptyEl = null;
+
+  function filter() {
+    const q = input.value.trim().toLowerCase();
+    if (!q) {
+      rows.forEach(r => r.classList.remove('dim'));
+      sections.forEach(s => s.classList.remove('dim-section'));
+      if (emptyEl) emptyEl.remove(), emptyEl = null;
+      return;
+    }
+    let any = false;
+    rows.forEach(r => {
+      const hay = (r.dataset.keys || '') + ' ' + r.textContent.toLowerCase();
+      const hit = hay.toLowerCase().includes(q);
+      r.classList.toggle('dim', !hit);
+      if (hit) any = true;
+    });
+    sections.forEach(s => {
+      const visible = [...s.querySelectorAll('.row')].some(r => !r.classList.contains('dim'));
+      s.classList.toggle('dim-section', !visible);
+    });
+    if (!any && !emptyEl) {
+      emptyEl = document.createElement('div');
+      emptyEl.className = 'empty';
+      emptyEl.innerHTML = `No matches. Try <kbd>rate</kbd>, <kbd>histogram</kbd>, or <kbd>label</kbd>.`;
+      main.appendChild(emptyEl);
+    } else if (any && emptyEl) {
+      emptyEl.remove(); emptyEl = null;
+    }
+  }
+  input.addEventListener('input', filter);
+
+  /* "/" focuses search */
+  window.addEventListener('keydown', e => {
+    if (e.key === '/' && document.activeElement !== input) {
+      e.preventDefault(); input.focus();
+    }
+    if (e.key === 'Escape' && document.activeElement === input) {
+      input.value = ''; filter(); input.blur();
+    }
+  });
+})();
+</script>
+
+<!-- Tweaks -->
+<script type="text/babel">
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "accent": "#E6522C",
+  "density": "comfortable"
+}/*EDITMODE-END*/;
+
+function PromQLTweaks() {
+  const { useTweaks, TweaksPanel, TweakSection, TweakColor, TweakRadio } = window;
+  const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+
+  React.useEffect(() => {
+    document.documentElement.style.setProperty('--accent', t.accent);
+    document.body.dataset.density = t.density;
+  }, [t.accent, t.density]);
+
+  return (
+    <TweaksPanel title="Tweaks">
+      <TweakSection title="Accent">
+        <TweakColor
+          value={t.accent}
+          onChange={v => setTweak('accent', v)}
+          options={['#E6522C', '#2563EB', '#10B981', '#7C3AED', '#111111']}
+        />
+      </TweakSection>
+      <TweakSection title="Density">
+        <TweakRadio
+          value={t.density}
+          onChange={v => setTweak('density', v)}
+          options={[
+            { value: 'comfortable', label: 'Comfortable' },
+            { value: 'compact', label: 'Compact' },
+          ]}
+        />
+      </TweakSection>
+    </TweaksPanel>
+  );
+}
+
+const root = document.createElement('div');
+document.body.appendChild(root);
+ReactDOM.createRoot(root).render(<PromQLTweaks />);
+</script>
+
+</body>
+</html>

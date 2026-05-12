@@ -1,0 +1,11 @@
+---
+import { highlightPromQL } from '~/lib/shiki';
+
+interface Props {
+  code: string;
+}
+
+const { code } = Astro.props;
+const html = await highlightPromQL(code);
+---
+<Fragment set:html={html} />

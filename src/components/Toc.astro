@@ -1,0 +1,8 @@
+---
+import { tocEntries } from '~/content/cheatsheet';
+---
+<nav class="toc">
+  {tocEntries.map(({ number, id, label }) => (
+    <a href={`#${id}`}><span>{number}</span>{label}</a>
+  ))}
+</nav>

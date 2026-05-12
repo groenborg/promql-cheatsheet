@@ -1,0 +1,22 @@
+---
+import type { Card } from '~/content/types';
+import Code from './Code.astro';
+
+interface Props {
+  card: Card;
+}
+
+const { card } = Astro.props;
+---
+<article class="row" data-keys={card.keys}>
+  <div class="row-title">
+    {card.titleHtml
+      ? <h3 set:html={card.title} />
+      : <h3>{card.title}</h3>}
+    {card.badge === 'basic' && <span class="badge">basic</span>}
+    {card.badge === 'advanced' && <span class="badge adv">advanced</span>}
+  </div>
+  {card.description && <p set:html={card.description} />}
+  {card.code && <Code code={card.code} />}
+  {card.note && <p class="note" set:html={card.note} />}
+</article>

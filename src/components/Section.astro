@@ -1,0 +1,21 @@
+---
+interface Props {
+  id: string;
+  number: string;
+  title: string;
+  subtitle?: string;
+  tall?: boolean;
+}
+
+const { id, number, title, subtitle, tall = false } = Astro.props;
+---
+<section class="cs" id={id}>
+  <div class="sec-head">
+    <span class="sec-num">{number}</span>
+    <h2>{title}</h2>
+    {subtitle && <span class="sec-sub">{subtitle}</span>}
+  </div>
+  <div class={tall ? 'grid tall' : 'grid'}>
+    <slot />
+  </div>
+</section>

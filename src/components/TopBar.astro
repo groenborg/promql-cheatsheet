@@ -1,0 +1,33 @@
+---
+import Search from './icons/Search.astro';
+import Sun from './icons/Sun.astro';
+import Moon from './icons/Moon.astro';
+import Printer from './icons/Printer.astro';
+---
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="brand-mark">{'{ }'}</div>
+      PromQL <small>cheatsheet</small>
+    </div>
+    <div class="topbar-spacer"></div>
+    <div class="search">
+      <Search />
+      <input id="search" type="search" placeholder="Search rate, sum, label_replace…" autocomplete="off" aria-label="Search" />
+      <kbd>/</kbd>
+    </div>
+    <button class="iconbtn" id="theme-toggle" title="Toggle theme" aria-label="Toggle theme" type="button">
+      <Sun id="icon-sun" />
+      <Moon id="icon-moon" class="hidden" />
+    </button>
+    <a class="printbtn" href="/one-pager">
+      <Printer />
+      One-pager
+    </a>
+  </div>
+</div>
+
+<style is:global>
+  #icon-moon.hidden { display: none; }
+  #icon-sun.hidden { display: none; }
+</style>

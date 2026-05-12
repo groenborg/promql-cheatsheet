@@ -1,0 +1,15 @@
+---
+import type { Gotcha } from '~/content/types';
+
+interface Props {
+  gotcha: Gotcha;
+}
+
+const { gotcha } = Astro.props;
+---
+<article class="row gotcha" data-keys={gotcha.keys}>
+  <div class="row-title">
+    <h3 set:html={gotcha.title} />
+  </div>
+  <p set:html={gotcha.description} />
+</article>

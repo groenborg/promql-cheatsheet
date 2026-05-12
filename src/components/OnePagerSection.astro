@@ -1,0 +1,36 @@
+---
+import type { OnePagerSection } from '~/content/one-pager';
+
+interface Props { section: OnePagerSection; }
+const { section } = Astro.props;
+---
+<section>
+  <h2><span class="num">{section.number}</span> <Fragment set:html={section.title} /></h2>
+  {section.blocks.map((block) => {
+    if (block.type === 'intro') {
+      return <div class="intro" set:html={block.text} />;
+    }
+    if (block.type === 'kv') {
+      return (
+        <table class="kv">
+          <tbody>
+            {block.rows.map((r) => (
+              <tr>
+                <td set:html={r.key} />
+                <td set:html={r.value} />
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      );
+    }
+    const it = block.item;
+    return (
+      <div class="item">
+        {it.label && <span class="label" set:html={it.label} />}
+        {it.desc && <div class="desc" set:html={it.desc} />}
+        {it.code && <pre set:html={it.code} />}
+      </div>
+    );
+  })}
+</section>
