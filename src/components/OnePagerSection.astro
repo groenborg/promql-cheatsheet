@@ -5,7 +5,7 @@ interface Props { section: OnePagerSection; }
 const { section } = Astro.props;
 ---
 <section>
-  <h2><span class="num">{section.number}</span> <Fragment set:html={section.title} /></h2>
+  <h2><span class="num" aria-hidden="true">{section.number}</span> <Fragment set:html={section.title} /></h2>
   {section.blocks.map((block) => {
     if (block.type === 'intro') {
       return <div class="intro" set:html={block.text} />;
@@ -16,7 +16,7 @@ const { section } = Astro.props;
           <tbody>
             {block.rows.map((r) => (
               <tr>
-                <td set:html={r.key} />
+                <th scope="row" set:html={r.key} />
                 <td set:html={r.value} />
               </tr>
             ))}

@@ -6,10 +6,12 @@ const sun = document.getElementById('icon-sun');
 const moon = document.getElementById('icon-moon');
 
 function syncIcons() {
-  if (!sun || !moon) return;
   const dark = html.dataset.theme === 'dark';
-  sun.classList.toggle('hidden', dark);
-  moon.classList.toggle('hidden', !dark);
+  if (sun && moon) {
+    sun.classList.toggle('hidden', dark);
+    moon.classList.toggle('hidden', !dark);
+  }
+  themeBtn?.setAttribute('aria-pressed', String(dark));
 }
 syncIcons();
 

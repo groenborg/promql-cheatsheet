@@ -22,8 +22,8 @@ import { cardSections, gotchaSection, gotchaCards } from '~/content/cheatsheet';
     <Section id={gotchaSection.id} number={gotchaSection.number} title={gotchaSection.title} subtitle={gotchaSection.subtitle}>
       {gotchaCards.map((g) => <Gotcha gotcha={g} />)}
     </Section>
-    <Footer />
   </main>
+  <Footer />
 </Base>
 
 <script>

@@ -8,8 +8,8 @@ interface Props {
 const { gotcha } = Astro.props;
 ---
 <article class="row gotcha" data-keys={gotcha.keys}>
-  <div class="row-title">
+  <header class="row-title">
     <h3 set:html={gotcha.title} />
-  </div>
+  </header>
   <p set:html={gotcha.description} />
 </article>

@@ -8,18 +8,17 @@ import { sections } from "~/content/one-pager";
 <Print title="PromQL · One-Pager">
   <div class="toolbar">
     <a href="/">← Back to full cheatsheet</a>
-    <span class="spacer"></span>
-    <span style="color:var(--ink-3); font-size:12px"
-      >A4 portrait · two-color · dense</span
-    >
+    <span class="spacer" aria-hidden="true"></span>
+    {/* TODO: consolidate this inline style into a reusable `.toolbar-meta` class */}
+    <span style="color:var(--ink-3); font-size:12px">A4 portrait · two-color · dense</span>
     <button id="print-btn" type="button">
       <Printer size={12} />
       Print / Save PDF
     </button>
   </div>
 
-  <div class="sheet">
-    <div class="head">
+  <article class="sheet">
+    <header class="head">
       <div class="head-l">
         <h1><em>PromQL</em> Cheatsheet</h1>
         <p>
@@ -29,23 +28,23 @@ import { sections } from "~/content/one-pager";
           >, advanced in <strong style="color:var(--accent)">accent</strong>.
         </p>
       </div>
-      <div class="head-r">
-        <span class="mark">v2.x</span><br />
-        one-pager · A4<br />
-        print at 100%<br />
-      </div>
-    </div>
+      <ul class="head-r">
+        <li><span class="mark">v2.x</span></li>
+        <li>one-pager · A4</li>
+        <li>print at 100%</li>
+      </ul>
+    </header>
 
     <div class="cols">
       {sections.map((s) => <OnePagerSection section={s} />)}
     </div>
 
-    <div class="foot">
+    <footer class="foot">
       <span>PromQL · v2.x reference</span>
       <span>print at 100% / fit-to-page</span>
       <span>prometheus.io/docs/prometheus/latest/querying</span>
-    </div>
-  </div>
+    </footer>
+  </article>
 </Print>
 
 <script>
