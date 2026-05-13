@@ -1,6 +1,6 @@
 import { createHighlighter, type Highlighter } from "shiki";
-import promqlGrammar from "./promql.tmLanguage.json" with { type: "json" };
 import promqlTheme from "./promql.theme.json" with { type: "json" };
+import promqlGrammar from "./promql.tmLanguage.json" with { type: "json" };
 
 let highlighterPromise: Promise<Highlighter> | null = null;
 

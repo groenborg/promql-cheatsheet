@@ -3,7 +3,7 @@ import { section as selectors } from "./02-selectors";
 import { section as time } from "./03-time";
 import { section as aggregation } from "./04-aggregation";
 import { section as functions } from "./05-functions";
-import { section as gotchas, gotchas as gotchaCards } from "./06-gotchas";
+import { gotchas as gotchaCards, section as gotchas } from "./06-gotchas";
 
 export const cardSections = [types, selectors, time, aggregation, functions];
 export const gotchaSection = gotchas;
