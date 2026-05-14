@@ -9,7 +9,13 @@ import TopBar from "~/components/TopBar.astro";
 import { cardSections, gotchaCards, gotchaSection } from "~/content/cheatsheet";
 import Base from "~/layouts/Base.astro";
 ---
-<Base title="PromQL Cheatsheet" description="A modern reference for the Prometheus query language — types, selectors, operators, aggregations, functions, time syntax, and the gotchas you only learn at 3am.">
+<Base
+  title="PromQL Cheatsheet"
+  description="A modern reference for the Prometheus query language — types, selectors, operators, aggregations, functions, time syntax, and the gotchas you only learn at 3am."
+  schema="article"
+  datePublished="2026-05-12"
+  dateModified="2026-05-13"
+>
   <TopBar />
   <main class="page">
     <Hero />

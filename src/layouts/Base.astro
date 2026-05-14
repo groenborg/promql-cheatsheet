@@ -12,6 +12,9 @@ interface Props {
 	description?: string;
 	image?: string;
 	path?: string;
+	schema?: "home" | "article";
+	datePublished?: string;
+	dateModified?: string;
 }
 
 const {
@@ -19,12 +22,52 @@ const {
 	description,
 	image = "/og.jpg",
 	path = Astro.url.pathname,
+	schema,
+	datePublished,
+	dateModified,
 } = Astro.props;
 
 const canonical = new URL(path, Astro.site).href;
 const ogImage = new URL(image, Astro.site).href;
 const ogAlt =
 	"PromQL Cheatsheet — Everything you need to write PromQL, on one page.";
+const siteUrl = Astro.site?.href ?? "https://promql.fyi/";
+
+const websiteSchema = {
+	"@type": "WebSite",
+	"@id": `${siteUrl}#website`,
+	url: siteUrl,
+	name: "PromQL Cheatsheet",
+	description:
+		"A modern reference for the Prometheus query language — types, selectors, operators, aggregations, functions, time syntax, and the gotchas you only learn at 3am.",
+	inLanguage: "en",
+};
+
+const articleSchema = schema === "article"
+	? {
+			"@type": "TechArticle",
+			"@id": `${canonical}#article`,
+			headline: title,
+			description,
+			url: canonical,
+			image: ogImage,
+			inLanguage: "en",
+			about: "PromQL (Prometheus Query Language)",
+			proficiencyLevel: "Beginner, Intermediate",
+			...(datePublished && { datePublished }),
+			...(dateModified && { dateModified }),
+			author: { "@type": "Organization", name: "promql.fyi", url: siteUrl },
+			publisher: { "@type": "Organization", name: "promql.fyi", url: siteUrl },
+			isPartOf: { "@id": `${siteUrl}#website` },
+		}
+	: null;
+
+const jsonLd = schema
+	? {
+			"@context": "https://schema.org",
+			"@graph": [websiteSchema, articleSchema].filter(Boolean),
+		}
+	: null;
 ---
 
 <!doctype html>
@@ -54,6 +97,11 @@ const ogAlt =
     {description && <meta name="twitter:description" content={description} />}
     <meta name="twitter:image" content={ogImage} />
     <meta name="twitter:image:alt" content={ogAlt} />
+
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)" />
+
+    {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
 
     <Analytics />
     <script is:inline>
